@@ -77,7 +77,7 @@ const getQuery = async (transcript: string) => {
           'role': 'USER'
         },
         {
-          'message': 'Atharv Cohere engineer San Francisco Bay Area University; Hey Atharv, loved talking earlier about your role at Cohere in the Bay Area, looking forward to connecting!',
+          'message': 'Atharv Cohere engineer; Hey Atharv, loved talking earlier about your role at Cohere in the Bay Area, looking forward to connecting!',
           'role': 'CHATBOT'
         },
         {
@@ -85,7 +85,7 @@ const getQuery = async (transcript: string) => {
           'role': 'USER'
         },
         {
-          'message': 'Mithil, Google engineer, New York, Waterloo; Hey Mithil, loved earned about your experience at Google in New York and your experiences at Waterloo in Canada.',
+          'message': 'Mithil, Google engineer, Waterloo; Hey Mithil, loved earned about your experience at Google in New York and your experiences at Waterloo in Canada.',
           'role': 'CHATBOT'
         },
 
@@ -94,7 +94,7 @@ const getQuery = async (transcript: string) => {
           'role': 'USER'
         },
         {
-          'message': 'Anav, Code for Cause, Los Altos, BASIS; Hey Anav, loved talking earlier about your role at Code for Cause in Los Altos, looking forward to connecting!',
+          'message': 'Anav, Code for Cause, BASIS; Hey Anav, loved talking earlier about your role at Code for Cause in Los Altos, looking forward to connecting!',
           'role': 'CHATBOT'
         },
       ],
