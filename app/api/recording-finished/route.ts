@@ -1,18 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
-  // Handle CORS preflight requests
-  if (request.method === "OPTIONS") {
-    return NextResponse.json({}, {
-      status: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
-    });
-  }
-
   try {
     // get the file; if no file is received, return an error
     const file = await getFile(request);
@@ -29,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     console.log(query);
 
-    return NextResponse.json({ success: true, query: query });
+    return NextResponse.json({ success: true, transcript: transcript, query: query });
     
   } catch (error) {
     console.error(error);
