@@ -1,12 +1,23 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
-  try {
+  // Handle CORS preflight requests
+  if (request.method === "OPTIONS") {
+    return NextResponse.json({}, {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      },
+    });
+  }
 
+  try {
     // get the file; if no file is received, return an error
     const file = await getFile(request);
     if (!file) {
-      return Response.json({ error: "No files received." }, { status: 400 });
+      return NextResponse.json({ error: "No files received." }, { status: 400 });
     }
 
     // use openai to get the transcript
@@ -14,18 +25,16 @@ export async function POST(request: NextRequest) {
 
     console.log(transcript);
     
-    
     const query = await getQuery(transcript);
 
     console.log(query);
 
+    return NextResponse.json({ success: true, query: query });
     
-    return Response.json({success: true, query: query});
-    
-	} catch (error) {
-		console.error(error);
-		return Response.json({ success: false });
-	}
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ success: false });
+  }
 }
 
 const getFile = async (request: NextRequest) => { 
@@ -60,7 +69,6 @@ const getQuery = async (transcript: string) => {
       'content-type': 'application/json',
       'Authorization': `bearer ${process.env.COHERE_API_KEY}`
     },
-    // body: '{\n  "message": "Hi there, whats your name? My name is Anav. What do you do? Im actually one of the co-founders of Code for Cause. Im based out of Los Altos. Oh, thats pretty cool. What school do you go to? I go to BASIS Independent Silicon Valley. Interesting...",\n  "chat_history": [\n    {\n      "message": "Hi there, whats your name? Hello, my name is Atharv. Oh, where do you work, Atharv? I actually work at Cohere. Cohere, thats pretty interesting. Yeah, Im based in the San Francisco Bay Area. Im from there too. Oh, thats pretty cool. Im actually a high schooler right now. Oh shit, we actually have a lot of high school opportunities, you know. Really? Yeah, we like to start them young, you know. Interesting. Yeah. So whats your role at Cohere, what do you do? I am a software engineer. Hmm. And I focus on LLMs and shit. You feel me? LLMs? Yeah. Got you. Yeah, yeah. Well, nice meeting you. Yeah, yeah. Lets keep in touch. Yeah, for sure. Theres some dusty ass motherfuckers working on this LinkedIn project. Uh-huh. And I hear theyre using our APIs. Yeah. All right. Looking forward to seeing you later. Yeah, for sure.",\n      "role": "USER"\n    },\n    {\n      "message": "Atharv Cohere engineer San Francisco Bay Area University",\n      "role": "CHATBOT"\n    },\n    {\n      "message": "Hi there, whats your name? My name is Mithil. What do you do? Im actually an engineer at Google. Im based out of New York. Oh, thats pretty cool. What school did you go to? I went to school in Waterloo, in Canada. Interesting...",\n      "role": "USER"\n    },\n    {\n      "message": "Mithil, Google engineer, New York, Waterloo",\n      "role": "CHATBOT"\n    }\n  ],\n  "model": "command-r-plus",\n  "preamble": "You will receive a. transcript of a conversation. You will take insights from those conversations, and use them to create a query that can be used to find the person from the conversation on LinkedIn. For example, try to create a prompt that is short with 4-6 words, includes the persons name and if possible includes their location, company, and title. "\n}',
     body: JSON.stringify({
       'message': transcript,
       'chat_history': [
@@ -91,7 +99,7 @@ const getQuery = async (transcript: string) => {
         },
       ],
       'model': 'command-r-plus',
-      'preamble': 'You will receive a. transcript of a conversation. You will take insights from those conversations, and use them to create a query that can be used to find the person from the conversation on LinkedIn. For example, try to create a prompt that is short with 4-6 words, includes the persons name and if possible includes their location, company, and title. '
+      'preamble': 'You will receive a transcript of a conversation. You will take insights from those conversations, and use them to create a query that can be used to find the person from the conversation on LinkedIn. For example, try to create a prompt that is short with 4-6 words, includes the person\'s name and if possible includes their location, company, and title.'
     })
   });
 
