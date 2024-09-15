@@ -1,4 +1,6 @@
+import { api } from "@/convex/_generated/api";
 import { NextRequest, NextResponse } from "next/server";
+import { fetchMutation, fetchQuery } from "convex/nextjs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,16 +10,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No files received." }, { status: 400 });
     }
 
+    console.log("file name", file.name);
+    
     // use openai to get the transcript
     const transcript = await getTranscript(file);
 
-    console.log(transcript);
+    console.log("transcript", transcript);
     
-    const query = await getQuery(transcript);
+    const [query, message] = await getQuery(transcript);
 
-    console.log(query);
+    console.log("query", query);
+    console.log("message", message);
 
-    return NextResponse.json({ success: true, transcript: transcript, query: query });
+    // send linkedin request
+    const linkedinResponse = await sendLinkedinRequest(query, message.trim());
+    console.log("linkedinResponse", linkedinResponse);
+
+    // save to db
+    saveToDb(transcript, query, message, linkedinResponse);
+
+    return NextResponse.json({ success: true, transcript: transcript, query: query,message: message, linkedinResponse: linkedinResponse });
     
   } catch (error) {
     console.error(error);
@@ -65,7 +77,7 @@ const getQuery = async (transcript: string) => {
           'role': 'USER'
         },
         {
-          'message': 'Atharv Cohere engineer San Francisco Bay Area University',
+          'message': 'Atharv Cohere engineer San Francisco Bay Area University; Hey Atharv, loved talking earlier about your role at Cohere in the Bay Area, looking forward to connecting!',
           'role': 'CHATBOT'
         },
         {
@@ -73,7 +85,7 @@ const getQuery = async (transcript: string) => {
           'role': 'USER'
         },
         {
-          'message': 'Mithil, Google engineer, New York, Waterloo',
+          'message': 'Mithil, Google engineer, New York, Waterloo; Hey Mithil, loved earned about your experience at Google in New York and your experiences at Waterloo in Canada.',
           'role': 'CHATBOT'
         },
 
@@ -82,16 +94,42 @@ const getQuery = async (transcript: string) => {
           'role': 'USER'
         },
         {
-          'message': 'Anav, Code for Cause, Los Altos, BASIS',
+          'message': 'Anav, Code for Cause, Los Altos, BASIS; Hey Anav, loved talking earlier about your role at Code for Cause in Los Altos, looking forward to connecting!',
           'role': 'CHATBOT'
         },
       ],
       'model': 'command-r-plus',
-      'preamble': 'You will receive a transcript of a conversation. You will take insights from those conversations, and use them to create a query that can be used to find the person from the conversation on LinkedIn. For example, try to create a prompt that is short with 4-6 words, includes the person\'s name and if possible includes their location, company, and title.'
+      'preamble': 'You will receive a transcript of a conversation. You will take insights from those conversations, and use them to create a query that can be used to find the person from the conversation on LinkedIn. For example, try to create a prompt that is short with 4-6 words, includes the person\'s name and if possible includes their location, company, and title. Then, also write a short message to be attached to that connection request. For example, you might say "Hey, Person Name, had a great time talking about ____ and ____ with you earlier. Looking forward to connecting!" Separate the two sections with a semicolon (;).',
     })
   });
 
   const json = await response.json();
 
-  return json.text;
+  return json.text.split(';');
+}
+
+
+const sendLinkedinRequest = async (query: string, message: string) => {
+  let headersList = {
+  "Accept": "*/*",
+  }
+
+  let response = await fetch(`https://2efd-2620-101-f000-7c2-00-630d.ngrok-free.app/api/send-linkedin-connection?query=${query}&message=${message}`, { 
+    method: "POST",
+    headers: headersList
+  });
+
+  const data = await response.json();
+  
+  return data;
+
+}
+
+const saveToDb = async (transcript: string, query: string, message: string, linkedinResponse: string) => {
+
+  await fetchMutation(api.myFunctions.addConversation, {
+    transcript: transcript,
+    query: query,
+    message: message,
+  });
 }
