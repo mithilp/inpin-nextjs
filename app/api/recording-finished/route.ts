@@ -1,6 +1,6 @@
 import { api } from "@/convex/_generated/api";
 import { NextRequest, NextResponse } from "next/server";
-import { fetchMutation, fetchQuery } from "convex/nextjs";
+import { fetchMutation } from "convex/nextjs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     console.log("linkedinResponse", linkedinResponse);
 
     // save to db
-    saveToDb(transcript, query, message, linkedinResponse);
+    await saveToDb(transcript, query, message);
 
     return NextResponse.json({ success: true, transcript: transcript, query: query,message: message, linkedinResponse: linkedinResponse });
     
@@ -110,11 +110,11 @@ const getQuery = async (transcript: string) => {
 
 
 const sendLinkedinRequest = async (query: string, message: string) => {
-  let headersList = {
+  const headersList = {
   "Accept": "*/*",
   }
 
-  let response = await fetch(`https://2efd-2620-101-f000-7c2-00-630d.ngrok-free.app/api/send-linkedin-connection?query=${query}&message=${message}`, { 
+  const response = await fetch(`https://2efd-2620-101-f000-7c2-00-630d.ngrok-free.app/api/send-linkedin-connection?query=${query}&message=${message}`, { 
     method: "POST",
     headers: headersList
   });
@@ -125,7 +125,7 @@ const sendLinkedinRequest = async (query: string, message: string) => {
 
 }
 
-const saveToDb = async (transcript: string, query: string, message: string, linkedinResponse: string) => {
+const saveToDb = async (transcript: string, query: string, message: string) => {
 
   await fetchMutation(api.myFunctions.addConversation, {
     transcript: transcript,
